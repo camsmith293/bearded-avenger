@@ -23,7 +23,7 @@ STORE_PATH = os.path.join(MOD_PATH, "store")
 RCVTIMEO = 5000
 SNDTIMEO = 2000
 LINGER = 3
-STORE_DEFAULT = 'dummy'
+STORE_DEFAULT = 'sqlite'
 STORE_PLUGINS = ['cif.store.dummy', 'cif.store.sqlite', 'cif.store.elasticsearch', 'cif.store.rdflib']
 
 
@@ -42,16 +42,8 @@ class Storage(object):
         self.connected = False
         self.ctrl = None
         self.loop = ioloop.IOLoop.instance()
-        self.store = 'cif.store.{}'.format(store)
 
-        # TODO replace with cif.utils.load_plugin
-        self.logger.debug('store is: {}'.format(self.store))
-        for loader, modname, is_pkg in pkgutil.iter_modules(cif.store.__path__, 'cif.store.'):
-            self.logger.debug('testing store plugin: {}'.format(modname))
-            if modname == self.store:
-                self.logger.debug('Loading plugin: {0}'.format(modname))
-                self.store = loader.find_module(modname).load_module(modname)
-                self.store = self.store.Plugin(*args, **kv)
+        self.store = load_plugin(cif.store.__path__[0], store)(*args, **kv)
 
         self.router = self.context.socket(zmq.ROUTER)
 
